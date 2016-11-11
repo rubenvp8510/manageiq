@@ -33,17 +33,18 @@ module ReportFormatter
       new_event_type = current_event_type = ""
 
       if mri.db == "EventStream" || mri.db == "PolicyEvent"
-        mri.table.data.sort_by(&:event_type).each_with_index do |row, _d_idx|
+        data_length =  mri.table.data.length
+        mri.table.data.sort_by(&:event_type).each_with_index do |row, d_idx|
           mri.rpt_options[:categories].each do |_, options|
             current_event_type = options[:display_name] if options[:event_groups].include?(row.event_type)
             @events.push(:name => options[:display_name],
                          :data => []) if @events.blank? ||
                                          @events.select { |i| i[:name] == options[:display_name] }.blank?
           end
-
+          new_event_type = current_event_type if new_event_type.empty? # First time cycle.
           tl_event(row, col)   # Add this row to the tl event xml
 
-          next if new_event_type == current_event_type
+          next if new_event_type == current_event_type && d_idx < (data_length - 1)
 
           event = @events.select { |i| i[:name] == current_event_type }
           event[0][:data].push(@events_data).flatten
